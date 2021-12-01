@@ -4,6 +4,9 @@ window.addEventListener('load', async () => {
         let response = await fetch('https://contest.elecard.ru/frontend_data/catalog.json');
         return await response.json();
     }
+    getResponse();
+    //jsonContent это общий полный объект 
+    let jsonContent = await getResponse();
 
     //Пагинация 
     let paginations = document.querySelector('.pagination');
@@ -109,8 +112,7 @@ window.addEventListener('load', async () => {
 
 
 
-    //jsonContent это общий полный объект 
-    let jsonContent = await getResponse();
+    
 
 
     //sortedByDate это отсортированный объект по дате 
