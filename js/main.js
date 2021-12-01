@@ -1,7 +1,7 @@
 window.addEventListener('load', async () => {
 
     async function getResponse() {
-        let response = await fetch('http://contest.elecard.ru/frontend_data/catalog.json');
+        let response = await fetch('https://contest.elecard.ru/frontend_data/catalog.json');
         return await response.json();
     }
 
