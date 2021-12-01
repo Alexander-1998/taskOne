@@ -1,0 +1,208 @@
+window.addEventListener('load', async () => {
+    async function getResponse() {
+        let response = await fetch('http://contest.elecard.ru/frontend_data/catalog.json');
+        return await response.json();
+    }
+
+    let jsonContent = await getResponse();
+
+    let paginations = document.querySelector('.pagination');
+
+    //Пагинация 
+    let noteOnePage = 30;
+    let page = 1;
+    let window = 5;
+
+
+    //Сортировка по дате создания
+
+    let byDate = document.querySelector('.byDate');
+
+    byDate.addEventListener('change', () => {
+        jsonContent.sort((a, b) => a.timestamp > b.timestamp ? 1 : -1);
+        showContent(jsonContent);
+        pagination(jsonContent, page, noteOnePage)
+    });
+
+
+    //Сортировка по размеру файла
+    let byAscent = document.querySelector('.byAscent');
+
+    byAscent.addEventListener('change', () => {
+        jsonContent.sort((a, b) => a.filesize > b.filesize ? -1 : 1);
+        showContent(jsonContent);
+        pagination(jsonContent, page, noteOnePage);
+    });
+
+    let sortCategory = document.querySelectorAll('input[name="sort"]');
+
+
+    //Сортировка по категории
+    sortCategory.forEach(radio => {
+        radio.addEventListener('change', () => {
+            let radioValue = radio.value;
+            let objMas = [];
+
+            // let copy = JSON.parse(JSON.stringify(jsonContent));
+            for (let key in jsonContent) {
+                if (radioValue == jsonContent[key].category) {
+                    objMas.push(jsonContent[key]);
+                }
+
+            }
+
+            jsonContent = objMas;
+            console.log(jsonContent);
+            showContent(jsonContent);
+            pagination(jsonContent, page, noteOnePage);
+        });
+
+    });
+
+
+
+
+
+    function pagination(obj, page, noteOnePage) {
+        let start = (page - 1) * noteOnePage;
+        let end = start + noteOnePage;
+
+        let trimmedObject = obj.slice(start, end);
+
+        let pages = Math.ceil(obj.length / noteOnePage);
+
+
+
+
+        return {
+            'jsonContent': trimmedObject,
+            'pages': pages,
+        }
+
+    }
+
+
+    let idCount = 0;
+
+    function pageButtons(pages) {
+        paginations.innerHTML = '';
+
+        let maxLeft = page - Math.floor(window / 2);
+        let maxRight = page + Math.floor(window / 2);
+
+        if (maxLeft < 1) {
+            maxLeft = 1;
+            maxRight = window;
+        }
+
+        if (maxRight > pages) {
+            maxLeft = pages - (window - 1);
+
+            maxRight = pages;
+
+            if (maxLeft < 1) {
+                maxLeft = 1;
+            }
+        }
+
+
+
+
+        if (page != 1) {
+            paginations.innerHTML += `<button class="pageNum" value="${1}">&#171; First</button>` + paginations.innerHTML;
+        }
+
+        for (let i = maxLeft; i <= maxRight; i++) {
+            paginations.innerHTML += `<button class="pageNum" value="${i}">${i}</button>`
+
+        }
+
+        if (page != pages) {
+            paginations.innerHTML = paginations.innerHTML + `<button class="pageNum" value="${pages}">Last &#187;</button>`;
+        }
+
+        let pageNum = document.querySelectorAll('.pageNum');
+
+
+        pageNum.forEach(item => {
+            item.addEventListener('click', () => {
+
+
+                page = Number(item.value);
+                showContent(jsonContent);
+
+
+            });
+        });
+
+        let closeBtn = document.querySelectorAll('.close');
+
+        closeBtn.forEach(item => {
+            item.addEventListener('click', (e) => {
+                let parent = item.parentNode;
+                let parentData = parent.dataset['id'];
+
+                parent.style.opacity = '0';
+                parent.style.display = 'none';
+                console.log(parentData.toString());
+                JSON.stringify(localStorage.setItem(parentData, parent));
+            })
+        })
+
+
+
+
+
+    }
+
+    showContent(jsonContent);
+
+    function showContent(obj) {
+        let data = pagination(obj, page, noteOnePage);
+
+        let list = document.querySelector('.list');
+
+
+        let myList = data.jsonContent;
+
+        list.innerHTML = '';
+        for (const key in myList) {
+            let image = myList[key].image;
+
+            let filesize = (myList[key].filesize / Math.pow(1024, 2)).toFixed(3);
+
+            let timestamp = new Date(myList[key].timestamp);
+
+            let timestampDay = timestamp.getDay(); //День
+
+            if (timestampDay < 10) {
+                timestampDay = '0' + timestampDay;
+            }
+
+            let timestampMonth = timestamp.getMonth(); //Месяц
+
+            if (timestampMonth < 10) {
+                timestampMonth = '0' + timestampMonth;
+            }
+
+            let timestampYears = timestamp.getFullYear(); // Год 
+            let fullDate = timestampDay + ' . ' + timestampMonth + ' . ' + timestampYears;
+
+            idCount++;
+            let category = myList[key].category;
+            list.innerHTML += `
+                        <li class="card" data-id="${idCount}" >
+                            <button class="close">X</button>
+                            <image src="http://contest.elecard.ru/frontend_data/${image}" alt="${myList[key].category}">
+                            <p>${filesize} мб</p>
+                            <p>${fullDate}</p>
+                            <p>${category}</p>
+                        </li>
+                    `
+        }
+
+        pageButtons(data.pages);
+    }
+
+    getResponse();
+});
